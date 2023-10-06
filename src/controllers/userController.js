@@ -224,6 +224,55 @@ const updateUserById = async (req, res, next) => {
   }
 };
 
+const handelBanUserById = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+    await User.findById({ _id: userId });
+    const updateOptions = { new: true, runValidators: true, context: "query" };
+
+    const updateUser = await User.findByIdAndUpdate(
+      userId,
+      { isBaned: true },
+      updateOptions
+    ).select("-password");
+
+    if (!updateUser) {
+      throw createError(400, "User was not banned successfully.");
+    }
+
+    // seccess response
+    return successResponse(res, {
+      statusCode: 201,
+      message: "User was banned successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const handelUnbanUserById = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+    await User.findById({ _id: userId });
+
+    const unbanndUser = await User.findByIdAndUpdate(
+      userId,
+      { isBaned: false },
+      { new: true, runValidators: true, context: "query" }
+    ).select("-password");
+    if (!unbanndUser) {
+      throw createError(400, "User was not unbannd successfully.");
+    }
+
+    return successResponse(res, {
+      statusCode: 200,
+      message: "User was unbannd successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const deleteUserById = async (req, res, next) => {
   try {
     const id = req.params.id;
@@ -252,4 +301,6 @@ module.exports = {
   processRegister,
   activateUserAccount,
   updateUserById,
+  handelBanUserById,
+  handelUnbanUserById,
 };

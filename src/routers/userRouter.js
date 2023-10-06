@@ -6,6 +6,8 @@ const {
   processRegister,
   activateUserAccount,
   updateUserById,
+  handelBanUserById,
+  handelUnbanUserById,
 } = require("../controllers/userController");
 const upload = require("../middlewares/uploadFile");
 const { validateUserRegistration } = require("../validators/auth");
@@ -26,5 +28,7 @@ userRouter.get("/", isLoggedIn, isAdmin, getUsers);
 userRouter.get("/:id", isLoggedIn, getUserById);
 userRouter.put("/:id", upload.single("image"), isLoggedIn, updateUserById);
 userRouter.delete("/:id", isLoggedIn, deleteUserById);
+userRouter.put("/ban-user/:id", isLoggedIn, isAdmin, handelBanUserById);
+userRouter.put("/unban-user/:id", isLoggedIn, isAdmin, handelUnbanUserById);
 
 module.exports = userRouter;

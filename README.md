@@ -1,12 +1,12 @@
-1. Course Plan
-2. Environment Setup
-3. Create Express Server -> express
-4. HTTP request and response
-5. nodemon and morgan package -> nodemon, morgan
-6. API testing with postman
-7. Middleware & Types of middleware
-8. Express Error Handling Middleware -> body-parser
-9. How to handle HTTP errors -> http-errors
+1.  Course Plan
+2.  Environment Setup
+3.  Create Express Server -> express
+4.  HTTP request and response
+5.  nodemon and morgan package -> nodemon, morgan
+6.  API testing with postman
+7.  Middleware & Types of middleware
+8.  Express Error Handling Middleware -> body-parser
+9.  How to handle HTTP errors -> http-errors
 10. How to secure API -> xss-clean, express-rate-limit
 11. Environment variable & .gitignore -> dotenv
 12. MVC Architecture
@@ -34,4 +34,8 @@
 34. POST /api/auth/logout -> user logout
 35. Middlewares -> isLoggedin, isLoggout, isAdmin
 36. Input validation when signed in and refactoring
-37. GET /api/auth/refresh -> refresh the token
+37. PUT /api/user/ban-user -> ban user
+38. PUT /api/user/unban-user -> unban user
+39. PUT /api/user/update-password -> update the password
+40. PUT /api/user/forget-password -> forget the password
+41. PUT /api/user/reset-password -> reset the password
