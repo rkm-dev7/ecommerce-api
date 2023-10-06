@@ -1,5 +1,6 @@
 // Import necessary modules and packages
 const fs = require("fs").promises; // Import fs.promises for promise-based file system operations
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const createError = require("http-errors");
 const User = require("../models/userModel");
@@ -227,7 +228,7 @@ const updateUserById = async (req, res, next) => {
 const handelBanUserById = async (req, res, next) => {
   try {
     const userId = req.params.id;
-    await User.findById({ _id: userId });
+    await findWithId(User, userId);
     const updateOptions = { new: true, runValidators: true, context: "query" };
 
     const updateUser = await User.findByIdAndUpdate(
@@ -253,7 +254,7 @@ const handelBanUserById = async (req, res, next) => {
 const handelUnbanUserById = async (req, res, next) => {
   try {
     const userId = req.params.id;
-    await User.findById({ _id: userId });
+    await findWithId(User, userId);
 
     const unbanndUser = await User.findByIdAndUpdate(
       userId,
@@ -293,7 +294,40 @@ const deleteUserById = async (req, res, next) => {
   }
 };
 
-// Export the getUsers function to make it accessible to other parts of the application
+const handelUpdatePassword = async (req, res, next) => {
+  try {
+    const { email, oldPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.params.id;
+    const user = await findWithId(User, userId);
+
+    const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordMatch) {
+      throw createError(400, "Old password is not correct.");
+    }
+    // const filter = { userId };
+    // const updates = { $set: { password: newPassword } };
+    // const options = { new: true, runValidators: true, context: "query" };
+    // const updateUser = await User.findByIdAndUpdate(filter, updates, options).select("-password");
+
+    const updateUser = await User.findByIdAndUpdate(
+      userId,
+      { password: newPassword },
+      { new: true, runValidators: true, context: "query" }
+    ).select("-password");
+
+    if (!updateUser) {
+      throw createError(400, "User was not updated successfully");
+    }
+    return successResponse(res, {
+      statusCode: 200,
+      message: "User updated successfully",
+      payload: { updateUser },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -303,4 +337,5 @@ module.exports = {
   updateUserById,
   handelBanUserById,
   handelUnbanUserById,
+  handelUpdatePassword,
 };

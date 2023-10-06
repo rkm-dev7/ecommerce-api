@@ -39,3 +39,4 @@
 39. PUT /api/user/update-password -> update the password
 40. PUT /api/user/forget-password -> forget the password
 41. PUT /api/user/reset-password -> reset the password
+42. GET /api/user/refresh -> refresh the token

@@ -71,4 +71,48 @@ const validateUserLogin = [
       "Password should contain at least one uppercase letter, one lowercase letter, one number and one special character"
     ),
 ];
-module.exports = { validateUserRegistration, validateUserLogin };
+
+const validateUserPasswordUpdate = [
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required. Enter your email address.")
+    .isEmail()
+    .withMessage("Please enter a valid email."),
+
+  body("oldPassword")
+    .trim()
+    .isString()
+    .notEmpty()
+    .withMessage("Old password is required. Enter your password.")
+    .isLength({ min: 8 })
+    .withMessage("Old password must be at least 8 characters long")
+    .matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,10}$/)
+    .withMessage(
+      "Password should contain at least one uppercase letter, one lowercase letter, one number and one special character"
+    ),
+
+  body("newPassword")
+    .trim()
+    .isString()
+    .notEmpty()
+    .withMessage("New password is required. Enter your password.")
+    .isLength({ min: 8 })
+    .withMessage("New passwordmust be at least 8 characters long")
+    .matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,10}$/)
+    .withMessage(
+      "Password should contain at least one uppercase letter, one lowercase letter, one number and one special character"
+    ),
+
+  body("confirmPassword").custom((value, { req }) => {
+    if (value !== req.body.newPassword) {
+      throw new Error("Password did not Match");
+    }
+    return true;
+  }),
+];
+module.exports = {
+  validateUserRegistration,
+  validateUserLogin,
+  validateUserPasswordUpdate,
+};
