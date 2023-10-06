@@ -30,3 +30,8 @@
 30. Add express validator middleware
 31. Should we store as a string or buffer
 32. PUT /api/users/:id -> update a single user by id
+33. POST /api/auth/login -> user login
+34. POST /api/auth/logout -> user logout
+35. Middlewares -> isLoggedin, isLoggout, isAdmin
+36. Input validation when signed in and refactoring
+37. GET /api/auth/refresh -> refresh the token

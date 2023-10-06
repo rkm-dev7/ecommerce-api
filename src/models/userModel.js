@@ -32,15 +32,6 @@ const userSchema = new Schema(
       minlength: [8, "The length of password can be minimum 8 characters"],
       required: [true, "password is required"],
       set: (v) => bcrypt.hashSync(v, bcrypt.genSaltSync(10)),
-      validate: {
-        validator: function (v) {
-          return /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,10}$/.test(
-            v
-          );
-        },
-        message:
-          "Password should contain at least one uppercase letter, one lowercase letter, one number and one special character",
-      },
     },
     image: {
       type: Buffer,

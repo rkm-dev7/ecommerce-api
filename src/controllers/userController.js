@@ -9,6 +9,7 @@ const deleteImage = require("../helper/deleteImage");
 const { jwtActivationKey, clientURL } = require("../secret");
 const { createJSONWebToken } = require("../helper/jsonwebtoken");
 const emailWithNodeMail = require("../helper/email");
+const { MAX_FILE_SIZE } = require("../config");
 
 // Retrieve users
 const getUsers = async (req, res, next) => {
@@ -19,15 +20,16 @@ const getUsers = async (req, res, next) => {
     const limit = Number(req.query.limit) || 5;
 
     // Check if page or limit values are invalid and throw an error if they are
-    if (page <= 0 || limit <= 0)
+    if (page <= 0 || limit <= 0 || isNaN(page) || isNaN(limit)) {
       throw createError(400, "Invalid page or limit values");
+    }
 
     // Create a regular expression for searching users based on the 'search' query parameter
     const searchRegExp = new RegExp(".*" + search + ".*", "i");
 
     // Define a filter to find users that match the search criteria and are not admins
     const filter = {
-      isAdmin: { $ne: true },
+      isAdmin: false,
       $or: [
         { name: { $regex: searchRegExp } },
         { email: { $regex: searchRegExp } },
@@ -49,7 +51,8 @@ const getUsers = async (req, res, next) => {
     }
 
     // Count the total number of users that match the filter criteria
-    const totalCount = await User.find(filter).countDocuments();
+    const totalCount = await User.find(filter).countDocuments().exec();
+    const totalPage = Math.ceil(totalCount / limit);
 
     // Send a response with the retrieved users and pagination information
     return successResponse(res, {
@@ -58,10 +61,10 @@ const getUsers = async (req, res, next) => {
       payload: {
         users,
         pagination: {
-          totalPage: Math.ceil(totalCount / limit),
+          totalPage: totalPage,
           currentPage: page,
           previousPage: page - 1 > 0 ? page - 1 : null,
-          nextPage: page + 1 <= Math.ceil(totalCount / limit) ? page + 1 : null,
+          nextPage: page + 1 <= totalPage ? page + 1 : null,
         },
       },
     });
@@ -89,11 +92,15 @@ const getUserById = async (req, res, next) => {
 const processRegister = async (req, res, next) => {
   try {
     const { name, email, password, phone, address } = req.body;
-    // if (!req.file) {
-    //   throw createError(404, "No image uploaded");
-    // }
     const image = req.file;
     const imageBufferString = image.buffer.toString("base64");
+
+    if (!image) {
+      throw createError(404, "User image is required.");
+    }
+    if (image.size > 2 * 1024 * 1024) {
+      throw createError(413, "File size exceeds the limit.");
+    }
 
     const userExists = await User.exists({ email: email });
     if (userExists) {
@@ -102,7 +109,7 @@ const processRegister = async (req, res, next) => {
 
     // create jwt
     const token = createJSONWebToken(
-      { name, email, password, phone, address, image: imageBufferString },
+      { name, email, password, phone, address },
       jwtActivationKey,
       "10m"
     );
@@ -116,7 +123,6 @@ const processRegister = async (req, res, next) => {
         <p>Please click here to <a href="${clientURL}/api/users/activate/${token}" target="_blank">activate your account</a></p>
       `,
     };
-
     // send email with nodemailer
     try {
       emailWithNodeMail(emailData);
@@ -174,6 +180,45 @@ const activateUserAccount = async (req, res, next) => {
 
 const updateUserById = async (req, res, next) => {
   try {
+    const userId = req.params.id;
+    const options = { password: 0 };
+    await findWithId(User, userId, options);
+    const updateOptions = { new: true, runValidators: true, context: "query" };
+
+    let updateData = {};
+
+    for (let key in req.body) {
+      if (["name", "password", "phone", "address"].includes(key)) {
+        updateData[key] = req.body[key];
+      }
+      if (["email"].includes(key)) {
+        throw createError(400, "Email can to be updated.");
+      }
+    }
+
+    const image = req.file;
+    if (image && image.size > 2 * 1024 * 1024) {
+      throw createError(413, "File size exceeds the limit.");
+    }
+    if (image) {
+      updateData.image = image.buffer.toString("base64");
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      { _id: userId },
+      updateData,
+      updateOptions
+    ).select("-password");
+
+    if (!updatedUser) {
+      throw createError(404, "User with this ID does not exist.");
+    }
+
+    return successResponse(res, {
+      statusCode: 201,
+      message: "User was updated successfully",
+      payload: updatedUser,
+    });
   } catch (error) {
     next(error);
   }
@@ -184,8 +229,6 @@ const deleteUserById = async (req, res, next) => {
     const id = req.params.id;
     const options = { password: 0 };
     const user = await findWithId(User, id, options);
-    const userImagePath = user.image;
-    deleteImage(userImagePath);
 
     await User.findByIdAndDelete({
       _id: id,
