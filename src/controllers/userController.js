@@ -6,8 +6,11 @@ const createError = require("http-errors");
 const User = require("../models/userModel");
 const { successResponse } = require("./responseController");
 const findWithId = require("../services/findItem");
-const deleteImage = require("../helper/deleteImage");
-const { jwtActivationKey, clientURL } = require("../secret");
+const {
+  jwtActivationKey,
+  clientURL,
+  jwtPasswordResetKey,
+} = require("../secret");
 const { createJSONWebToken } = require("../helper/jsonwebtoken");
 const emailWithNodeMail = require("../helper/email");
 const { MAX_FILE_SIZE } = require("../config");
@@ -328,6 +331,75 @@ const handelUpdatePassword = async (req, res, next) => {
   }
 };
 
+const handelForgetPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const userData = await User.findOne({ email });
+    if (!userData) {
+      throw createError(
+        404,
+        "Email is incorrect or you have not varified your email address. Please register yourself first."
+      );
+    }
+    const token = createJSONWebToken({ email }, jwtPasswordResetKey, "15m");
+
+    // prepare email
+    const emailData = {
+      email,
+      subject: "Reset password email",
+      html: `
+            <h2>Hello, ${userData.name}</h2>
+            <p>Please click here to <a href="${clientURL}/api/users/reset-password/${token}" target="_blank">reset your password.</a></p>
+          `,
+    };
+    // send email with nodemailer
+    try {
+      emailWithNodeMail(emailData);
+    } catch (emailError) {
+      next(createError(500, "Failed to send reset password email"));
+      return;
+    }
+
+    successResponse(res, {
+      statusCode: 200,
+      message: `please go your ${email} for reseting the password.`,
+      payload: token,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const handelResetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    const decoded = jwt.verify(token, jwtPasswordResetKey);
+    if (!decoded) {
+      throw createError(400, "Invalid or Expire token.");
+    }
+    const filter = { email: decoded.email };
+    const updateData = { password: password };
+    const options = { new: true, runValidators: true, context: "query" };
+    const updatdUser = await User.findOneAndUpdate(
+      filter,
+      updateData,
+      options
+    ).select("-password");
+
+    if (!updatdUser) {
+      throw createError(404, "password reset failed.");
+    }
+
+    successResponse(res, {
+      statusCode: 200,
+      message: "Password rest successfully",
+      payload: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -338,4 +410,6 @@ module.exports = {
   handelBanUserById,
   handelUnbanUserById,
   handelUpdatePassword,
+  handelForgetPassword,
+  handelResetPassword,
 };

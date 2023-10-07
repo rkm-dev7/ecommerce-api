@@ -111,8 +111,36 @@ const validateUserPasswordUpdate = [
     return true;
   }),
 ];
+
+const validateUserPasswordForget = [
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required. Enter your email address.")
+    .isEmail()
+    .withMessage("Please enter a valid email."),
+];
+
+const validateUserResetPassword = [
+  body("token").trim().notEmpty().withMessage("Token is missing."),
+
+  body("password")
+    .trim()
+    .isString()
+    .notEmpty()
+    .withMessage("Password is required. Enter your password.")
+    .isLength({ min: 8 })
+    .withMessage("The password must be at least 8 characters long")
+    .matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,10}$/)
+    .withMessage(
+      "Password should contain at least one uppercase letter, one lowercase letter, one number and one special character"
+    ),
+];
+
 module.exports = {
   validateUserRegistration,
   validateUserLogin,
   validateUserPasswordUpdate,
+  validateUserPasswordForget,
+  validateUserResetPassword,
 };

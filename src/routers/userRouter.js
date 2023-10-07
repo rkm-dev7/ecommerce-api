@@ -9,11 +9,15 @@ const {
   handelBanUserById,
   handelUnbanUserById,
   handelUpdatePassword,
+  handelForgetPassword,
+  handelResetPassword,
 } = require("../controllers/userController");
 const upload = require("../middlewares/uploadFile");
 const {
   validateUserRegistration,
   validateUserPasswordUpdate,
+  validateUserPasswordForget,
+  validateUserResetPassword,
 } = require("../validators/auth");
 const { handleValidationErrors } = require("../validators");
 const { isLoggedIn, isLoggedOut, isAdmin } = require("../middlewares/auth");
@@ -30,6 +34,12 @@ userRouter.post(
 userRouter.post("/activate", isLoggedOut, activateUserAccount);
 userRouter.get("/", isLoggedIn, isAdmin, getUsers);
 userRouter.get("/:id", isLoggedIn, getUserById);
+userRouter.put(
+  "/reset-password",
+  validateUserResetPassword,
+  handleValidationErrors,
+  handelResetPassword
+);
 userRouter.put("/:id", upload.single("image"), isLoggedIn, updateUserById);
 userRouter.delete("/:id", isLoggedIn, deleteUserById);
 userRouter.put("/ban-user/:id", isLoggedIn, isAdmin, handelBanUserById);
@@ -40,6 +50,12 @@ userRouter.put(
   handleValidationErrors,
   isLoggedIn,
   handelUpdatePassword
+);
+userRouter.post(
+  "/forgate-password",
+  validateUserPasswordForget,
+  handleValidationErrors,
+  handelForgetPassword
 );
 
 module.exports = userRouter;
