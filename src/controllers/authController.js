@@ -5,6 +5,7 @@ const User = require("../models/userModel");
 const { successResponse } = require("./responseController");
 const { createJSONWebToken } = require("../helper/jsonwebtoken");
 const { jwtAccessKey, jwtRefreshKey } = require("../secret");
+const { setAccesstokenCookie } = require("../helper/cookie");
 
 const handleLogin = async (req, res, next) => {
   try {
@@ -30,25 +31,14 @@ const handleLogin = async (req, res, next) => {
     }
 
     // token, cookie
-    const accessToken = createJSONWebToken({ user }, jwtAccessKey, "1m");
-    res.cookie("accessToken", accessToken, {
-      maxAge: 1 * 60 * 1000, // 60 minutes
-      httpOnly: true,
-      secure: true,
-      sameSite: "None", // Use "None" to allow cross-site cookies
-    });
+    const accessToken = createJSONWebToken({ user }, jwtAccessKey, "5m");
+    setAccesstokenCookie(res, accessToken);
     const refreshToken = createJSONWebToken({ user }, jwtRefreshKey, "7d");
-    res.cookie("refreshToken", refreshToken, {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      httpOnly: true,
-      secure: true,
-      sameSite: "None", // Use "None" to allow cross-site cookies
-    });
+    setRefreshtokenCookie(res, refreshToken);
 
     // Create without the "password" field
-    const userWithoutPassword = await User.findOne({ email }).select(
-      "-password"
-    );
+    const userWithoutPassword = user.toObject();
+    delete userWithoutPassword.password;
     // success response
     return successResponse(res, {
       statusCode: 200,
@@ -64,6 +54,7 @@ const handleLogout = async (req, res, next) => {
   try {
     //clear cookie
     res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
     // success response
     return successResponse(res, {
       statusCode: 200,
@@ -84,18 +75,13 @@ const handleRefreshToken = (req, res, next) => {
     if (!decodedToken) {
       throw createError(401, "Invalid refresh token. Please login again.");
     }
-    console.log(decodedToken.user);
+
     const accessToken = createJSONWebToken(
       decodedToken.user,
       jwtAccessKey,
-      "1m"
+      "5m"
     );
-    res.cookie("accessToken", accessToken, {
-      maxAge: 1 * 60 * 1000, // 60 minutes
-      httpOnly: true,
-      secure: true,
-      sameSite: "None", // Use "None" to allow cross-site cookies
-    });
+    setAccesstokenCookie(res, accessToken);
     successResponse(res, {
       statusCode: 200,
       message: "new access token is generated",

@@ -1,16 +1,16 @@
 const express = require("express");
 const {
-  getUsers,
-  getUserById,
-  deleteUserById,
-  processRegister,
-  activateUserAccount,
-  updateUserById,
-  handelBanUserById,
-  handelUnbanUserById,
-  handelUpdatePassword,
-  handelForgetPassword,
-  handelResetPassword,
+  handleGetUsers,
+  handleGetUserById,
+  handleDeleteUserById,
+  handleProcessRegister,
+  handleActivateUserAccount,
+  handleUpdateUserById,
+  handleBanUserById,
+  handleUnbanUserById,
+  handleUpdatePassword,
+  handleForgetPassword,
+  handleResetPassword,
 } = require("../controllers/userController");
 const upload = require("../middlewares/uploadFile");
 const {
@@ -29,33 +29,48 @@ userRouter.post(
   isLoggedOut,
   validateUserRegistration,
   handleValidationErrors,
-  processRegister
+  handleProcessRegister
 );
-userRouter.post("/activate", isLoggedOut, activateUserAccount);
-userRouter.get("/", isLoggedIn, isAdmin, getUsers);
-userRouter.get("/:id", isLoggedIn, getUserById);
+userRouter.post("/activate", isLoggedOut, handleActivateUserAccount);
+userRouter.get("/", isLoggedIn, isAdmin, handleGetUsers);
+userRouter.get("/:id([0-9a-fA-F]{24})", isLoggedIn, handleGetUserById);
 userRouter.put(
   "/reset-password",
   validateUserResetPassword,
   handleValidationErrors,
-  handelResetPassword
+  handleResetPassword
 );
-userRouter.put("/:id", upload.single("image"), isLoggedIn, updateUserById);
-userRouter.delete("/:id", isLoggedIn, deleteUserById);
-userRouter.put("/ban-user/:id", isLoggedIn, isAdmin, handelBanUserById);
-userRouter.put("/unban-user/:id", isLoggedIn, isAdmin, handelUnbanUserById);
+userRouter.put(
+  "/:id([0-9a-fA-F]{24})",
+  upload.single("image"),
+  isLoggedIn,
+  handleUpdateUserById
+);
+userRouter.delete("/:id([0-9a-fA-F]{24})", isLoggedIn, handleDeleteUserById);
+userRouter.put(
+  "/ban-user/:id([0-9a-fA-F]{24})",
+  isLoggedIn,
+  isAdmin,
+  handleBanUserById
+);
+userRouter.put(
+  "/unban-user/:id([0-9a-fA-F]{24})",
+  isLoggedIn,
+  isAdmin,
+  handleUnbanUserById
+);
 userRouter.put(
   "/update-password/:id",
   validateUserPasswordUpdate,
   handleValidationErrors,
   isLoggedIn,
-  handelUpdatePassword
+  handleUpdatePassword
 );
 userRouter.post(
   "/forgate-password",
   validateUserPasswordForget,
   handleValidationErrors,
-  handelForgetPassword
+  handleForgetPassword
 );
 
 module.exports = userRouter;
