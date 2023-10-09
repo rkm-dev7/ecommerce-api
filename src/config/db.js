@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 
 // Import the 'mongodbURL' from a secret file. Make sure to replace this with your actual secret.
 const { mongodbURL } = require("../secret");
+const { logger } = require("../controllers/loggerController");
 
 // Define a function 'connectDatabase' that connects to the MongoDB database.
 const connectDatabase = async (options = {}) => {
@@ -11,15 +12,15 @@ const connectDatabase = async (options = {}) => {
     await mongoose.connect(mongodbURL, options);
 
     // If the connection is successful, log a message indicating the successful connection.
-    console.log("connected to MongoDB");
+    logger.log("info", "connected to MongoDB");
 
     // Set up an event listener to handle any database connection errors.
     mongoose.connection.on("error", (error) => {
-      console.error("DB connection error: ", error);
+      logger.log("error", "DB connection error: ", error);
     });
   } catch (error) {
     // If there is an error during the connection attempt, log an error message.
-    console.error("Could not connect to DB: ", error.toString());
+    logger.log("error", "Could not connect to DB: ", error.toString());
   }
 };
 

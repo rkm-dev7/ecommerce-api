@@ -40,3 +40,8 @@
 40. PUT /api/user/forget-password -> forget the password
 41. PUT /api/user/reset-password -> reset the password
 42. GET /api/user/refresh -> refresh the token
+43. Get /api/user/protected -> varify the token and give access to the other route
+44. Refactoring
+45. Moduler code structure
+46. Winston Logger library
+47. Category Model and input validation
