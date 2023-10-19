@@ -1,4 +1,4 @@
-1.  Course Plan
+1.  Plan
 2.  Environment Setup
 3.  Create Express Server -> express
 4.  HTTP request and response
